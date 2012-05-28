@@ -1,0 +1,57 @@
+ThFun - Fun with Threads    (C) 2012 sft, jbremer
+
+    Introduction
+
+The idea of ThFun is to present ways to use threads as obfuscation method.
+We believe that misusing threads can result in great anti-debugging methods.
+
+In the following few chapters we will discuss various methods that may or may
+not combine into our master piece.
+
+    Method I: Dispatching function Calls
+
+This is one of the easiest methods. Instead of calling a function directly, we
+spawn a new thread that calls the particular function. From there we can
+either wait for the thread to finish or doing something else in the meantime.
+When the thread has finished doing its thing, we get the return value and
+continue normal execution flow from there.
+
+    Method II: Splitting functionality over multiple Threads
+
+Assuming we have a function (or a block of code, for that matter) we can split
+this function into multiple parts. After spawning multiple threads, each
+containing a small part of the function, we can start "execution" of the
+original function. While one of the threads will start doing something, the
+other threads enter a busy-loop which waits until a variabele is set. So
+basically we rip a function apart and split it up over multiple threads,
+great care has to be taken regarding the general purpose registers.
+
+    Method III: Polymorphic Checksum Checks
+
+Two threads are connected. Between performing regular instructions, checks
+are performed in the linked threads. For example, a thread makes sure that the
+other thread is still running, is still executing a particular function, etc.
+This can be really useful against the usual Reverse Engineering method where
+other threads are suspended.
+
+    Method IV: Timing Attacks
+
+While a thread performs a particular task, it logs some data, such as time.
+After, or while a thread is still running (Method III), the threads logged
+information will be checked, e.g. a simple for loop should take 10 seconds at
+max, not 10 minutes.
+
+    Method V: Dynamic Value Generation
+
+Several threads are spawned, each of them calculates some value(s). By taking
+the return value(s) of these threads and combining them, a new value is
+generated, use this as an address, hash, whatever. Combine this method with
+Method IV, for example to define that one of the threads should take a maximum
+of 5 seconds to finish, this way a wrong value will be generated if the thread
+takes too long (e.g. suspended, reverse engineered.)
+
+    Method VI: Spoofing Threads
+
+We have multiple threads, but by spoofing the Thread Environment Block, we can
+spoof threads. This way the current thread id will not match that of what an
+external listing (such as one by ollydbg) shows.
