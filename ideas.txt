@@ -25,6 +25,9 @@ original function. While one of the threads will start doing something, the
 other threads enter a busy-loop which waits until a variabele is set. So
 basically we rip a function apart and split it up over multiple threads,
 great care has to be taken regarding the general purpose registers.
+It is also possible to execute "dummy" threads which do nothing but random 
+mathematical calculations which could also obsucre the essence of the actual
+running thread
 
     Method III: Polymorphic Checksum Checks
 
@@ -33,6 +36,10 @@ are performed in the linked threads. For example, a thread makes sure that the
 other thread is still running, is still executing a particular function, etc.
 This can be really useful against the usual Reverse Engineering method where
 other threads are suspended.
+The first thread could first spawn a child and thus debug it, this could be done
+for all threads executing BB and "dummy" threads, thus making only kernel debug
+possible to debug all the threads.
+
 
     Method IV: Timing Attacks
 
@@ -55,3 +62,5 @@ takes too long (e.g. suspended, reverse engineered.)
 We have multiple threads, but by spoofing the Thread Environment Block, we can
 spoof threads. This way the current thread id will not match that of what an
 external listing (such as one by ollydbg) shows.
+
+
