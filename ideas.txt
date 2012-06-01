@@ -64,3 +64,60 @@ spoof threads. This way the current thread id will not match that of what an
 external listing (such as one by ollydbg) shows.
 
 
+
+-------
+
+
+Before going into any sort of simple implementation I think we should first
+state the kind of problems we might encouter during the development
+of a simple proof-of-concept that will work.
+
+
+
+
+	Problem I: One path, one graph
+
+All the methods mentioned above do not parallelize the program itself, so
+the program will eventually execute as a single threaded program.
+Two real functions will not be executed in parallel, and thus the Control
+Flow Graph will be the same ( if you remove all of the obfuscations mentioned
+above ) 
+
+We should consider at least trying to identify which functions could work 
+in parallel ( aka do not depend on each other etc ) and then execute them
+in parallel with all the obfuscations mentioned above. Such phase will make
+obfuscation much harder in order to distinguish which threads acutally
+matter and which do not do anything 
+
+
+	Problem II: Be on the safe side
+
+If we consider to solve the first problem, we will have to transform non-thread-
+safe code into thread-safe code, such task implementation is unknown to me
+but I consider about a few things which we must consider when doing such task.
+	1. FS:[0xXXX] and the like - if the program touches this section
+		we must know if it hurts any part of our obfuscation 
+		and if so we must identify how to mitigate it's acts
+	2. Global variables - used in different parallel functions must be 
+		locked if a function accesses them the same time another function 
+		accesses them.
+
+
+There is another things which we must think about is deadlocks and blocking 
+threads/functions
+
+
+	Problem III: Dead, locks
+
+Since the code is originally single threaded, we must consider that some 
+of the parallel code will block certain operations, therefore we must 
+make sure that none of our parallel things create any sort of blocking
+to which interfere with other functions
+The same concepts goes for locks which are forgotten to be freed.
+
+
+
+
+
+
+ 
