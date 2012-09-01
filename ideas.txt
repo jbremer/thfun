@@ -29,6 +29,19 @@ It is also possible to execute "dummy" threads which do nothing but random
 mathematical calculations which could also obsucre the essence of the actual
 running thread
 
+The main idea is based on using distorm to split the function into bb until
+we have reached the end of the function (we fetched the last 'ret' instruction and haven't reached any <align 10h /* assuming this is VC */ push ebp> sequence )
+
+After we have all the bb of the function we append a prologue which:
+1. Adds the required stack storage (sub esp, .. ) to the variables allocated by the function
+2. Calls WaitForSingleObject and waits until the previous bb (thread) has finished, thus only once the previous thread has finished the execution will continue as if there were threads at all
+
+How do we create the object for WaitForSingleObject for each thread and how we make sure
+we send it over to every thread (current bb and next ) and make sure that closing it will be steathly enough not to discover the execution flow ? 
+
+After the current thread has finished the execution an epilogue is appended to the function and this epilogue actually calls the function which actually calls the CloseHandle to transfer execution to the next thread <--
+
+
     Method III: Polymorphic Checksum Checks
 
 Two threads are connected. Between performing regular instructions, checks
@@ -41,12 +54,19 @@ for all threads executing BB and "dummy" threads, thus making only kernel debug
 possible to debug all the threads.
 
 
+This is a classical fork() and Debug() sequence, we can use timers to wake the checker thread to calculate a md5/checksum everytime 
+Once again, this makes the thought about how to cause the fork and the debug event, perhaps some global struture which contains some PIDs of debuggee and debugger
+
+
     Method IV: Timing Attacks
 
 While a thread performs a particular task, it logs some data, such as time.
 After, or while a thread is still running (Method III), the threads logged
 information will be checked, e.g. a simple for loop should take 10 seconds at
 max, not 10 minutes.
+
+Using RDTSC instruction to check how much it took all the sequence, we can run the functions (trace) during generation stage and see how long it takes w/ random values (assuming these are integers and not some sophisticated structs here)
+This method could be the checksum used in Method III to see if the thread is still a virgin or it has been tampered.
 
     Method V: Dynamic Value Generation
 
@@ -57,11 +77,17 @@ Method IV, for example to define that one of the threads should take a maximum
 of 5 seconds to finish, this way a wrong value will be generated if the thread
 takes too long (e.g. suspended, reverse engineered.)
 
+
+The value is calculated using some random function (think NCD or Shannon's entropy for this code sequence, bb, or several functions), and is then put in a global locked array, once all functions have finished their duty, the "epilogue" functions calculates the actual return address to the next function, this could stop, as mentioned beforehand - timing attacks if used correctly w/ RDTSC or time() etc
+
     Method VI: Spoofing Threads
 
 We have multiple threads, but by spoofing the Thread Environment Block, we can
 spoof threads. This way the current thread id will not match that of what an
 external listing (such as one by ollydbg) shows.
+
+This method is quite classical, link the original binary w/ some forged functions which are also obfuscated using the methods displayed here beforehand and thus it is quite hard to identify which functions are legitimate and which are not
+Assuming all functions are generated on the fly (and stay encrypted on disk), it is quite hard to find the actual execution flow if you have N main threads and N*N sub-threads which continue execution afterwards.
 
 
 
