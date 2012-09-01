@@ -1,7 +1,7 @@
 ThFun - Fun with Threads    (C) 2012 sft, jbremer
 
     Introduction
-
+ 
 The idea of ThFun is to present ways to use threads as obfuscation method.
 We believe that misusing threads can result in great anti-debugging methods.
 
@@ -65,7 +65,8 @@ After, or while a thread is still running (Method III), the threads logged
 information will be checked, e.g. a simple for loop should take 10 seconds at
 max, not 10 minutes.
 
-Using RDTSC instruction to check how much it took all the sequence, we can run the functions (trace) during generation stage and see how long it takes w/ random values (assuming these are integers and not some sophisticated structs here)
+Using RDTSC instruction to check how much it took all the sequence, we can run the functions (trace)
+during generation stage and see how long it takes w/ random values (assuming these are integers and not some sophisticated structs here)
 This method could be the checksum used in Method III to see if the thread is still a virgin or it has been tampered.
 
     Method V: Dynamic Value Generation
@@ -78,7 +79,9 @@ of 5 seconds to finish, this way a wrong value will be generated if the thread
 takes too long (e.g. suspended, reverse engineered.)
 
 
-The value is calculated using some random function (think NCD or Shannon's entropy for this code sequence, bb, or several functions), and is then put in a global locked array, once all functions have finished their duty, the "epilogue" functions calculates the actual return address to the next function, this could stop, as mentioned beforehand - timing attacks if used correctly w/ RDTSC or time() etc
+The value is calculated using some random function (think NCD or Shannon's entropy for this code sequence, bb, or several functions),
+and is then put in a global locked array, once all functions have finished their duty,
+the "epilogue" functions calculates the actual return address to the next function, this could stop, as mentioned beforehand - timing attacks if used correctly w/ RDTSC or time() etc
 
     Method VI: Spoofing Threads
 
@@ -86,8 +89,93 @@ We have multiple threads, but by spoofing the Thread Environment Block, we can
 spoof threads. This way the current thread id will not match that of what an
 external listing (such as one by ollydbg) shows.
 
-This method is quite classical, link the original binary w/ some forged functions which are also obfuscated using the methods displayed here beforehand and thus it is quite hard to identify which functions are legitimate and which are not
-Assuming all functions are generated on the fly (and stay encrypted on disk), it is quite hard to find the actual execution flow if you have N main threads and N*N sub-threads which continue execution afterwards.
+This method is quite classical, link the original binary w/ some forged functions which are also 
+obfuscated using the methods displayed here beforehand and thus it is quite hard to identify which functions are legitimate and which are not
+Assuming all functions are generated on the fly (and stay encrypted on disk), it is quite hard to find the actual 
+execution flow if you have N main threads and N*N sub-threads which continue execution afterwards.
+
+original function (or bb) looks like this:
+..snip
+.text:004030AF                 push    0
+.text:004030B1                 push    ecx
+.text:004030B2                 mov     ecx, esp
+.text:004030B4                 mov     [ebp+var_144], esp
+.text:004030BA                 push    400h
+.text:004030BF                 call    sub_40B370
+.text:004030C4                 push    0
+.text:004030C6                 push    offset aYourProductHas ; "Your product has been temporarily activ"...
+.text:004030CB                 lea     ecx, [ebp+var_148]
+.text:004030D1                 push    ecx
+.text:004030D2                 call    ds:?tr@QObject@@SA?AVQString@@PBD0@Z ; QObject::tr(char const *,char const *)
+.text:004030D8                 add     esp, 0Ch
+.text:004030DB                 mov     [ebp+var_24C], eax
+.text:004030E1                 mov     edx, [ebp+var_24C]
+.text:004030E7                 mov     [ebp+var_250], edx
+.text:004030ED                 mov     [ebp+var_4], 22h
+.text:004030F4                 mov     eax, [ebp+var_250]
+.text:004030FA                 push    eax
+.text:004030FB                 lea     ecx, [ebp+var_14C]
+.text:00403101                 push    ecx
+.text:00403102                 call    ds:?applicationName@QCoreApplication@@SA?AVQString@@XZ ; QCoreApplication::applicationName(void)
+.text:00403108                 add     esp, 4
+.text:0040310B                 mov     [ebp+var_254], eax
+.text:00403111                 mov     edx, [ebp+var_254]
+.text:00403117                 mov     [ebp+var_258], edx
+.text:0040311D                 mov     byte ptr [ebp+var_4], 23h
+.text:00403121                 mov     eax, [ebp+var_258]
+.text:00403127                 push    eax
+.text:00403128                 mov     ecx, [ebp+var_168]
+.text:0040312E                 push    ecx
+.text:0040312F                 call    ds:?information@QMessageBox@@SA?AW4StandardButton@1@PAVQWidget@@ABVQString@@1V?$QFlags@W4StandardButton@QMessageBox@@@@W421@@Z ; QMessageBox::information(QWidget *,QString const &,QString const &,QFlags<QMessageBox::StandardButton>,QMessageBox::StandardButton)
+.text:00403135                 add     esp, 14h
+.text:00403138                 mov     byte ptr [ebp+var_4], 22h
+.text:0040313C                 lea     ecx, [ebp+var_14C]
+.text:00403142                 call    ds:??1QString@@QAE@XZ ; QString::~QString(void)
+.text:00403148                 mov     [ebp+var_4], 0FFFFFFFFh
+.text:0040314F                 lea     ecx, [ebp+var_148]
+.text:00403155                 call    ds:??1QString@@QAE@XZ ; QString::~QString(void)
+.text:0040315B                 jmp     loc_4032D2
+..snip...
+
+we take this bb and split it into multiple chunks, so we get something like this :
+
+
+f1_Chunk1:
+.text:004030AF                 push    0
+.text:004030B1                 push    ecx
+.text:004030B2                 mov     ecx, esp
+.text:004030B4                 mov     [ebp+var_144], esp
+
+f1_Chunk2:
+.text:004030BA                 push    400h
+.text:004030BF                 call    sub_40B370
+.text:004030C4                 push    0
+.text:004030C6                 push    offset aYourProductHas ; "Your product has been temporarily activ"...
+.text:004030CB                 lea     ecx, [ebp+var_148]
+.text:004030D1                 push    ecx
+.text:004030D2                 call    ds:?tr@QObject@@SA?AVQString@@PBD0@Z ; QObject::tr(char const *,char const *)
+
+f1_Chunk3:
+.text:004030D8                 add     esp, 0Ch
+.text:004030DB                 mov     [ebp+var_24C], eax
+.text:004030E1                 mov     edx, [ebp+var_24C]
+.text:004030E7                 mov     [ebp+var_250], edx
+.text:004030ED                 mov     [ebp+var_4], 22h
+.text:004030F4                 mov     eax, [ebp+var_250]
+.text:004030FA                 push    eax
+.text:004030FB                 lea     ecx, [ebp+var_14C]
+.text:00403101                 push    ecx
+.text:00403102                 call    ds:?applicationName@QCoreApplication@@SA?AVQString@@XZ ; QCoreApplication::applicationName(void)
+
+etc etc
+then, you take another function, and split it also into chunks, so you get f2_chunk1, f2_chunk2, f2_chunk3
+then you take both chunks and merge them into one code block, so you get something like this:
+
+f1_chunk1 ; f2_chunk1 ; f1_chunk2 ; f2_chunk2 ; f1_chunk3 ; f2_chunk3 ; etc
+
+eventually you encrypt everything into disk using xtea/whatever and upon runtime you decrypt it and start running both f1 
+function with all of the previous methods mentioned above and f2 with all of the previous methods mentioned above
+so it is quite hard to actually understand which function is actually legitimate to follow 
 
 
 
