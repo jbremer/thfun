@@ -1,0 +1,29 @@
+ThFun - pwning your mother since 1998
+
+Our aim in this presentation is to show that security through obfuscation 
+can be presented not only through single-flow program which obfuscated
+the program control flow, but rather a multi-threaded flow.
+
+In this presentation we present ThFun, a multi-threaded based obfuscator .
+ThFun obfuscates program control flow by using a variety of threading tricks 
+which involve, but not only, TLS obfuscation , timing attacks, basic block obfuscation,
+dynamic return values and more
+
+It is important to understand that nowadays, most - if not all, program obfuscators or program
+protectors are based on one control flow, even the top-notch obfuscators which
+employ virtual machine obfuscation are one single control and thus it is possible to follow 
+the control flow using dynamic taint analysis, symbolic execution or instrumentation.
+It is possible to thus achieve one full picture of the code 
+and thus pass it into further static analysis engines.
+
+ThFun brings a new method to obfuscate the program by splitting the program into 
+several threads which execute different parts of the program's code.
+The control flow of the program stays intact to avoid deadlocks and race conditions
+however, static analysis or classical used instrumentation methods nowadays will result 
+in several (big) control flow which are hard to follow and understand.
+
+The presentation will cover the basic components of the ThFun obfuscator and will
+show a few proof of concepts for each method we employ.
+
+-
+
